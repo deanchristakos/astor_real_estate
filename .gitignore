@@ -3,6 +3,7 @@ venv/
 .cache/
 __pycache__/
 build/
+build/lib/
+build/lib/astor_real_estate/
 dist/
 astor_real_estate.egg-info
-
