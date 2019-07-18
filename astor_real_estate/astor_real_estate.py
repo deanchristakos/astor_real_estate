@@ -5,6 +5,7 @@ from marshmallow import pprint
 import sys
 import os
 import re
+from sklearn.neighbors import NearestNeighbors
 
 env = None
 try:
@@ -26,12 +27,17 @@ except KeyError as e:
 
 if cfg_dir is None:
     cfg_dir = '/usr/local/etc/astor_square/'
+
+
 def main(argv):
     connection_pool = getDBConnectionPool(cfg_dir + '/' + env + '.ini')
     bbl_1 = '1014051004'
-    bbl_2 = '1014057502'
-    nearby = get_nearby_buildings(bbl_1)
-
+    bbl_2 = '1014057501'
+    nearby1 = get_nearby_buildings(bbl_1)
+    pprint(nearby1)
+    nearby2 = get_nearby_buildings(bbl_2)
+    pprint(nearby2)
+    assert len(nearby1) == len(nearby2)
     return
     bldg = CondoBuilding(bbl_2, connection_pool)
     bldg.load_building_attributes()
@@ -40,8 +46,7 @@ def main(argv):
     pprint(bldg.get_json().data, indent=4)
     return
 
-
-def get_nearby_buildings(bbl):
+def get_building_by_bbl(bbl):
     condo_pattern = re.compile('\d{6}75\d\d')
     connection_pool = getDBConnectionPool(cfg_dir + '/' + env + '.ini')
     conn = connection_pool.getconn()
@@ -63,7 +68,10 @@ def get_nearby_buildings(bbl):
         rows = cursor.fetchall()
         condo_bldg_bbl = None
         for row in rows:
-            if condo_pattern.match(row[0]):
+            result_bbl = row[0]
+            result_borough = int(result_bbl[0])
+            result_block = int(result_bbl[1:6])
+            if condo_pattern.match(row[0]) and result_borough == borough and result_block == block:
                 condo_bldg_bbl = row[0]
                 break
         connection_pool.putconn(conn)
@@ -75,32 +83,38 @@ def get_nearby_buildings(bbl):
         bldg = Building(bbl, connection_pool)
 
     bldg.load_building_attributes()
-    bldg.load_nearby_buildings()
+    return bldg
+
+def get_nearby_buildings(bbl):
+    bldg = get_building_by_bbl(bbl)
+    if len(bldg.nearby_buildings) == 0:
+        bldg.load_nearby_buildings()
     bldg_json = bldg.get_json()
     nearby_buildings = bldg_json.data['nearby_buildings']
     return nearby_buildings
 
 def get_building_attributes_by_bbl(bbl):
-    query = """SELECT bbl, lotarea, bldgarea, comarea, resarea, officearea, retailarea, garagearea, stgearea, factryarea, otherarea,
-            numfloors, unitsres, unitstotal yearbuilt, yearalter1, yearalter2 FROM pluto_all WHERE bbl = %s"""
-    dbconnection = getDBConnection()
-    cursor = dbconnection.cusor()
-    cursor.execute(query, (bbl,))
-    description = cursor.description
-    column_names = [d[0] for d in description]
-    column_types = [d[1] for d in description]
-    rows = cursor.fetchall()
-    results = []
-    for row in rows:
-        results.append(row)
-    return_result = {}
-    return_result['column_names'] = column_names
-    return_result['column_types'] = column_types
-    return_result['results'] = results
-    json_result = json.dumps(return_result).data
-    return json_result
+    bldg = get_building_by_bbl(bbl)
+    bldg_json = bldg.get_json()
+    return bldg_json
 
+def get_similar_buildings(bbl):
+    bldg = get_building_by_bbl(bbl)
 
+    test_attributes = bldg.get_attributes_as_array()
+    if len(bldg.nearby_buildings) == 0:
+        bldg.load_nearby_buildings()
+    nearby_buildings = bldg.nearby_buildings
+    nearby_attributes = [nb.get_attributes_as_array() for nb in nearby_buildings]
+
+    neigh = NearestNeighbors(algorithm='brute')
+    neigh.fit(nearby_attributes)
+    #print 'test attributes: ' + str(test_attributes)
+    nearest = neigh.kneighbors([test_attributes], 5)
+    indices = nearest[1][0]
+
+    similar_buildings = [nearby_buildings[idx].get_json().data for idx in indices]
+    return similar_buildings
 
 if __name__ == '__main__':
     main(sys.argv[1:])
