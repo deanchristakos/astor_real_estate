@@ -1,11 +1,11 @@
 #!/usr/bin/python
-from astor_square_utils import *
 from astor_housing import *
 from marshmallow import pprint
 import sys
 import os
 import re
 from sklearn.neighbors import NearestNeighbors
+import string
 
 env = None
 try:
@@ -20,8 +20,10 @@ except KeyError as e:
 if env is None:
     env = 'local'
 
+cfg_dir = None
+
 try:
-    cdg_dir = os.environ['ASTOR_CFG_DIR']
+    cfg_dir = os.environ['ASTOR_CFG_DIR']
 except KeyError as e:
     cfg_dir = None
 
@@ -113,7 +115,13 @@ def get_similar_buildings(bbl):
     nearest = neigh.kneighbors([test_attributes], 5)
     indices = nearest[1][0]
 
-    similar_buildings = [nearby_buildings[idx].get_json().data for idx in indices]
+    found = False
+    for idx in indices:
+        building_bbl = ''.join(filter(lambda c: c in string.printable, bldg.bbl))
+        nearby_bbl = ''.join(filter(lambda c: c in string.printable, nearby_buildings[idx].bbl))
+        if building_bbl == nearby_bbl:
+            found = True
+    similar_buildings = [nearby_buildings[idx].get_json().data for idx in indices if str(nearby_buildings[idx].bbl) != str(bldg.bbl)]
     return similar_buildings
 
 if __name__ == '__main__':

@@ -151,6 +151,8 @@ class Building(object):
         rows = cursor.fetchall()
         for results in rows:
             bbl = results[3]
+            if bbl == self.bbl:
+                continue
             bldg = Building(bbl)
             bldg.address = results[4] + ' NEW YORK, NY ' + str(results[5])
             bldg.lotarea = results[6]
@@ -183,6 +185,11 @@ class Building(object):
                 row = cursor.fetchone()
             if row is not None:
                 bldg.gr_sqft = row[0]
+            tax_query = 'SELECT tax_year, tax_bill FROM tax_records WHERE bbl=%s AND tax_bill IS NOT NULL ORDER BY bill_date DESC;'
+            cursor.execute(tax_query, (bbl,))
+            row = cursor.fetchone()
+            if row is not None:
+                bldg.property_tax = row[1]
 
         self.connection_pool.putconn(dbconnection)
 
