@@ -81,7 +81,8 @@ class Building(object):
         tax_query = 'SELECT tax_year, tax_bill FROM tax_records WHERE bbl=%s AND tax_bill IS NOT NULL ORDER BY bill_date DESC;'
         cursor.execute(tax_query, (self.bbl,))
         row = cursor.fetchone()
-        self.property_tax = row[1]
+        if row is not None:
+            self.property_tax = row[1]
 
         self.connection_pool.putconn(dbconnection)
 
