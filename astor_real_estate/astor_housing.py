@@ -1,3 +1,5 @@
+import logging
+logging.basicConfig(format='%(asctime)s %(funcName)s %(message)s', filename='/var/log/astor_square/astor_housing.log',level=logging.DEBUG)
 from astor_schemas import *
 import math
 from astor_square_utils import *
@@ -209,6 +211,7 @@ class CityComparables(object):
 
         dbconnection = self.connection_pool.getconn()
         cursor = dbconnection.cursor()
+        logging.debug('executing query ' + self.query + ' with argument ' + query_bbl)
         cursor.execute(self.query, (query_bbl,))
         rows = cursor.fetchall()
         for row in rows:
