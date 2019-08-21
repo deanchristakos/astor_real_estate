@@ -43,7 +43,7 @@ def main(argv):
     bbl_1 = '1014051004'
     bbl_2 = '1014057501'
     res = get_building_by_bbl(bbl_1)
-    pprint(res.get_json().data, indent=4)
+    pprint(res.get_json(), indent=4)
     return
     nearby1 = get_nearby_buildings(bbl_1)
     pprint(nearby1)
@@ -55,7 +55,7 @@ def main(argv):
     bldg.load_building_attributes()
     bldg.get_units_in_building()
     #bldg.load_nearby_buildings()
-    pprint(bldg.get_json().data, indent=4)
+    pprint(bldg.get_json(), indent=4)
     return
 
 
@@ -139,7 +139,7 @@ def get_nearby_buildings(bbl):
     if len(bldg.nearby_buildings) == 0:
         bldg.load_nearby_buildings()
     bldg_json = bldg.get_json()
-    nearby_buildings = bldg_json.data['nearby_buildings']
+    nearby_buildings = bldg_json['nearby_buildings']
     return nearby_buildings
 
 
@@ -170,7 +170,7 @@ def get_similar_buildings(bbl):
         nearby_bbl = ''.join(filter(lambda c: c in string.printable, nearby_buildings[idx].bbl))
         if building_bbl == nearby_bbl:
             found = True
-    similar_buildings = [nearby_buildings[idx].get_json().data for idx in indices if str(nearby_buildings[idx].bbl) != str(bldg.bbl)]
+    similar_buildings = [nearby_buildings[idx].get_json() for idx in indices if str(nearby_buildings[idx].bbl) != str(bldg.bbl)]
     return similar_buildings
 
 

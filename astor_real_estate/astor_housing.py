@@ -217,7 +217,7 @@ class CityComparables(object):
         logging.debug('executing query ' + self.query + ' with argument ' + query_bbl)
         cursor.execute(self.query, (query_bbl,))
         rows = cursor.fetchall()
-        logging.debug('got ' + len(rows) + ' comparable results')
+        logging.debug('got ' + str(len(rows)) + ' comparable results')
         for row in rows:
             comparable = Comparable()
             comparable.create_comparable_from_row(row)
@@ -226,7 +226,7 @@ class CityComparables(object):
         return
 
     def get_json(self):
-        result = [c.get_json().data for c in self.comparables]
+        result = [c.get_json() for c in self.comparables]
         json_result = json.dumps(result)
         return result
 
