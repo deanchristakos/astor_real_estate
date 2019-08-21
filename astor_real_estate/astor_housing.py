@@ -2,6 +2,252 @@ from astor_schemas import *
 import math
 from astor_square_utils import *
 
+class UnitTaxInfo(object):
+    def __init__(self, bbl=None, connection_pool=None):
+        self.connection_pool = connection_pool
+        self.query = None
+
+        self.bbl = bbl
+        self.neighborhood = None
+        self.building_class = None
+        self.borough_block_lot = None
+        self.address = None
+        self.year_built = None
+        self.total_units = None
+        self.gross_square_feet = None
+        self.estimated_gross_income = None
+        self.gross_income_per_square_foot = None
+        self.estimated_expense = None
+        self.expense_per_square_foot = None
+        self.net_operating_income = None
+        self.full_market_value = None
+        self.market_value_per_square_foot = None
+        self.annual_tax = None
+
+
+class Comparable(UnitTaxInfo):
+
+    def __init__(self, bbl=None, connection_pool=None):
+        UnitTaxInfo.__init__(self, bbl, connection_pool)
+        self.query = 'select * from tax_analysis_city_comparables where borough_block_lot = %s'
+
+        self.bbl = None
+        self.neighborhood = None
+        self.building_class = None
+        self.borough_block_lot = None
+        self.address = None
+        self.year_built = None
+        self.total_units = None
+        self.gross_square_feet = None
+        self.estimated_gross_income = None
+        self.gross_income_per_square_foot = None
+        self.estimated_expense = None
+        self.expense_per_square_foot = None
+        self.net_operating_income = None
+        self.full_market_value = None
+        self.market_value_per_square_foot = None
+        self.comparablebbl = None
+
+    def __repr__(self):
+        return "<Comparable(bbl={self.comparablebbl!r},comparablebbl={self.comparablebbl!r})>".format(self=self)
+
+    def create_comparable_from_row(self, row):
+
+        self.neighborhood = row[0]
+        self.building_class = row[1]
+        self.borough_block_lot = row[2]
+        self.bbl = self.borough_block_lot.replace('-','') if self.bbl is None else self.bbl
+        self.address = row[3]
+        self.year_built = row[4]
+        self.total_units = row[5]
+        self.gross_square_feet = row[6]
+        self.estimated_gross_income = row[7]
+        self.gross_income_per_square_foot = row[8]
+        self.estimated_expense = row[9]
+        self.expense_per_square_foot = row[10]
+        self.net_operating_income = row[11]
+        self.full_market_value = row[12]
+        self.market_value_per_square_foot = row[13]
+        self.comparablebbl = row[14]
+
+        return
+
+    def load_comparable_attributes(self):
+        if self.bbl is None:
+            return
+
+        query_bbl = create_dashed_bbl(self.bbl)
+        dbconnection = self.connection_pool.getconn()
+        cursor = dbconnection.cursor()
+        cursor.execute(self.query, (query_bbl,))
+        row = cursor.fetchone()
+
+        self.neighborhood = row[0]
+        self.building_class = row[1]
+        self.borough_block_lot = row[2]
+        self.bbl = self.borough_block_lot.replace('-','')
+        self.address = row[3]
+        self.year_built = row[4]
+        self.total_units = row[5]
+        self.gross_square_feet = row[6]
+        self.estimated_gross_income = row[7]
+        self.gross_income_per_square_foot = row[8]
+        self.estimated_expense = row[9]
+        self.expense_per_square_foot = row[10]
+        self.net_operating_income = row[11]
+        self.full_market_value = row[12]
+        self.market_value_per_square_foot = row[13]
+        self.comparablebbl = row[14]
+
+
+    def get_json(self):
+        if self.bbl is None and self.connection_pool is not None:
+            self.load_comparable_attributes()
+        elif self.bbl is None and self.connection_pool is None:
+            return '{}'
+        schema = ComparableSchema()
+        return schema.dump(self)
+
+class PropertyTaxAnalysis(UnitTaxInfo):
+
+    def __init__(self, bbl=None, connection_pool=None):
+        UnitTaxInfo.__init__(self, bbl, connection_pool)
+
+        self.query = 'select * from building_tax_analysis where borough_block_lot = %s'
+
+        self.bbl = bbl
+        self.last_year_total_market_value = None
+        self.this_year_total_market_value = None
+        self.last_year_assessed_value = None
+        self.this_year_assessed_value = None
+        self.last_year_transitional_assessed_value = None
+        self.this_year_transitional_assessed_value = None
+
+    def __repr__(self):
+        return "<PropertyTaxAnalysis(bbl={self.bbl!r})>".format(self=self)
+
+    def load_tax_analysis_attributes(self):
+        if self.bbl is None:
+            return
+
+        query_bbl = create_dashed_bbl(self.bbl)
+
+        dbconnection = self.connection_pool.getconn()
+        cursor = dbconnection.cursor()
+        cursor.execute(self.query, (query_bbl,))
+        row = cursor.fetchone()
+
+        self.neighborhood = row[0]
+        self.building_class = row[1]
+        self.borough_block_lot = row[2]
+        self.address = row[3]
+        self.year_built = row[4]
+        self.total_units = row[5]
+        self.gross_square_feet = row[6]
+        self.estimated_gross_income = row[7]
+        self.gross_income_per_square_foot = row[8]
+        self.estimated_expense = row[9]
+        self.expense_per_square_foot = row[10]
+        self.net_operating_income = row[11]
+        self.full_market_value = row[12]
+        self.market_value_per_square_foot = row[13]
+        self.last_year_total_market_value = row[14]
+        self.this_year_total_market_value = row[15]
+        self.last_year_assessed_value = row[16]
+        self.this_year_assessed_value = row[17]
+        self.last_year_transitional_assessed_value = row[18]
+        self.this_year_transitional_assessed_value = row[19]
+        self.annual_tax = row[20]
+
+        self.connection_pool.putconn(dbconnection)
+        return
+
+    def get_json(self):
+        if self.neighborhood is None and self.connection_pool is not None:
+            self.load_tax_analysis_attributes()
+        elif self.neighborhood is None and self.connection_pool is None:
+            return ''
+        schema = PropertyTaxAnalysisSchema()
+        return schema.dump(self)
+
+
+class CondoTaxAnalysis(PropertyTaxAnalysis):
+    def __init__(self, bbl=None, connection_pool=None):
+        PropertyTaxAnalysis.__init__(self, bbl, connection_pool)
+
+        self.query = 'select * from condo_tax_analysis where borough_block_lot = %s'
+
+    def __repr__(self):
+        return "<CondoTaxAnalysis(bbl={self.bbl!r})>".format(self=self)
+
+class UnitAndBuildingTaxAnalysis(object):
+
+    def __init__(self, unit_tax_analysis, building_tax_analysis):
+        self.unit_tax_analysis = unit_tax_analysis
+        if self.unit_tax_analysis.neighborhood is None and self.unit_tax_analysis.connection_pool is not None:
+            self.unit_tax_analysis.load_tax_analysis_attributes()
+        self.building_tax_analysis = building_tax_analysis
+        if self.building_tax_analysis.neighborhood is None and self.building_tax_analysis.connection_pool is not None:
+            self.building_tax_analysis.load_tax_analysis_attributes()
+
+    def __repr__(self):
+        return "<UnitAndBuildingTaxAnalysis(unit_tax_analysis={self.unit_tax_analysis!r}, building_tax_analysis={self.building_tax_analysis!r})>".format(self=self)
+
+    def get_json(self):
+        schema = UnitAndBuildingTaxAnalysisSchema()
+        return schema.dump(self)
+
+class CityComparables(object):
+
+    def __init__(self, bbl=None, connection_pool=None):
+        self.query = 'select * from tax_analysis_city_comparables where comparableof = %s'
+        self.comparables = []
+        self.comparableof = bbl
+        self.connection_pool = connection_pool
+
+        query_bbl = create_dashed_bbl(self.comparableof)
+
+        dbconnection = self.connection_pool.getconn()
+        cursor = dbconnection.cursor()
+        cursor.execute(self.query, (query_bbl,))
+        rows = cursor.fetchall()
+        for row in rows:
+            comparable = Comparable()
+            comparable.create_comparable_from_row(row)
+            self.comparables.append(comparable)
+        self.connection_pool.putconn(dbconnection)
+        return
+
+    def get_json(self):
+        result = [c.get_json().data for c in self.comparables]
+        json_result = json.dumps(result)
+        return result
+
+
+
+'''
+neighborhood                          | text                  |           |          | 
+ building_class                        | text                  |           |          | 
+ borough_block_lot                     | character varying(15) |           |          | 
+ address                               | text                  |           |          | 
+ year_built                            | integer               |           |          | 
+ total_units                           | integer               |           |          | 
+ gross_square_feet                     | double precision      |           |          | 
+ estimated_gross_income                | double precision      |           |          | 
+ gross_income_per_square_foot          | double precision      |           |          | 
+ estimated_expense                     | double precision      |           |          | 
+ expense_per_square_foot               | double precision      |           |          | 
+ net_operating_income                  | double precision      |           |          | 
+ full_market_value                     | double precision      |           |          | 
+ market_value_per_square_foot          | double precision      |           |          | 
+ last_year_total_market_value          | double precision      |           |          | 
+ this_year_total_market_value          | double precision      |           |          | 
+ last_year_assessed_value              | double precision      |           |          | 
+ this_year_assessed_value              | double precision      |           |          | 
+ last_year_transitional_assessed_value | double precision      |           |          | 
+ this_year_transitional_assessed_value | double precision      
+'''
+
 class Building(object):
     def __init__(self, bbl=None, connection_pool = None):
         self.bbl = bbl
@@ -260,9 +506,8 @@ class ApartmentBuilding(Building):
         self.fn_exl_a = None
         self.fn_ext_a = None
 
-    def _load(self):
-        if self.connection_pool is None:
-            return None
+    def load_building_attributes(self):
+        Building.load_building_attributes(self)
         query = '''SELECT * FROM tc234 WHERE bble=%s'''
         dbconnection = self.connection_pool.getconn()
 
@@ -280,6 +525,42 @@ class ApartmentBuilding(Building):
             except ValueError:
                 continue
             vars(self)[varname] = row[idx]
+
+    def _load(self):
+        if self.connection_pool is None:
+            return None
+        self.load_building_attributes()
+        query = '''SELECT * FROM tc234 WHERE bble=%s'''
+        altquery = '''SELECT * FROM tc1 WHERE bble=%s'''
+        dbconnection = self.connection_pool.getconn()
+
+        cursor = dbconnection.cursor()
+        cursor.execute(query, (self.bbl,))
+        row = cursor.fetchone()
+        if row is None:
+            cursor.execute(altquery, (self.bbl,))
+            row = cursor.fetchone()
+        if row is None:
+            return
+        description = cursor.description
+        column_names = [d[0] for d in description]
+        column_types = [d[1] for d in description]
+
+        for varname in vars(self).keys():
+            try:
+                idx = column_names.index(varname)
+            except ValueError:
+                continue
+            vars(self)[varname] = row[idx]
+
+    def get_json(self):
+        if self.xcoord is None and self.connection_pool is not None:
+            self.load_building_attributes()
+        elif self.xcoord is None and self.connection_pool is None:
+            return ''
+        schema = ApartmentBuildingSchema()
+        return schema.dump(self)
+
 
 
 class CoopBuilding(ApartmentBuilding):
