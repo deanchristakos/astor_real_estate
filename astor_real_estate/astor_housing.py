@@ -59,6 +59,7 @@ class Comparable(UnitTaxInfo):
         self.building_class = row[1]
         self.borough_block_lot = row[2]
         self.bbl = self.borough_block_lot.replace('-','') if self.bbl is None else self.bbl
+        logging.debug('bbl set to ' + self.bbl + ' from ' + self.borough_block_lot)
         self.address = row[3]
         self.year_built = row[4]
         self.total_units = row[5]
@@ -104,8 +105,10 @@ class Comparable(UnitTaxInfo):
 
     def get_json(self):
         if self.bbl is None and self.connection_pool is not None:
+            logging.debug('loading comparable attributes')
             self.load_comparable_attributes()
         elif self.bbl is None and self.connection_pool is None:
+            logging.debug('No bbl. Returning blank result')
             return '{}'
         schema = ComparableSchema()
         return schema.dump(self)
@@ -214,6 +217,7 @@ class CityComparables(object):
         logging.debug('executing query ' + self.query + ' with argument ' + query_bbl)
         cursor.execute(self.query, (query_bbl,))
         rows = cursor.fetchall()
+        logging.debug('got ' + len(rows) + ' comparable results')
         for row in rows:
             comparable = Comparable()
             comparable.create_comparable_from_row(row)
