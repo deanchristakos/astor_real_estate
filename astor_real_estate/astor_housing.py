@@ -26,6 +26,20 @@ class UnitTaxInfo(object):
         self.market_value_per_square_foot = None
         self.annual_tax = None
 
+        self.full_addr = None
+
+    @property
+    def full_address(self):
+        if self.full_addr is None and self.address is not None:
+            borough = self.bbl[0]
+            city = get_borough_city(borough)
+            state = 'NY'
+            zip = getzipcode(self.address, city, state)
+            if zip is None:
+                zip = ''
+            self.full_addr = self.address + ' ' + city + ', ' + state + ' ' + zip
+        return self.full_addr
+
 
 class Comparable(UnitTaxInfo):
 
