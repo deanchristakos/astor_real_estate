@@ -208,5 +208,16 @@ def get_city_tax_comparable_buildings(bbl):
 
     return result
 
+def get_recommended_tax_comparable_buildings(bbl):
+    connection_pool = getDBConnectionPool(cfg_dir + '/' + env + '-api.ini')
+    building_bbl = get_building_bbl(bbl, connection_pool)
+    if building_bbl is None:
+        building_bbl = bbl
+    recommended_comparables = RecommendedComparables(building_bbl, connection_pool)
+    recommended_comparables_json = recommended_comparables.get_json()
+    result = json.dumps(recommended_comparables_json)
+
+    return result
+
 if __name__ == '__main__':
     main(sys.argv[1:])

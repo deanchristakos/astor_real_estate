@@ -24,7 +24,8 @@ class UnitTaxInfo(object):
         self.net_operating_income = None
         self.full_market_value = None
         self.market_value_per_square_foot = None
-        self.annual_tax = None
+        self.last_year_annual_tax = None
+        self.this_year_annual_tax = None
 
         self.full_addr = None
 
@@ -63,6 +64,7 @@ class Comparable(UnitTaxInfo):
         self.full_market_value = None
         self.market_value_per_square_foot = None
         self.comparablebbl = None
+        self.annual_tax = None
 
     def __repr__(self):
         return "<Comparable(bbl={self.comparablebbl!r},comparablebbl={self.comparablebbl!r})>".format(self=self)
@@ -85,7 +87,8 @@ class Comparable(UnitTaxInfo):
         self.net_operating_income = row[11]
         self.full_market_value = row[12]
         self.market_value_per_square_foot = row[13]
-        self.comparablebbl = row[14]
+        self.distance_from_subject_in_miles = row[14]
+        self.comparablebbl = row[15]
 
         return
 
@@ -126,6 +129,7 @@ class Comparable(UnitTaxInfo):
             return '{}'
         schema = ComparableSchema()
         return schema.dump(self)
+
 
 class PropertyTaxAnalysis(UnitTaxInfo):
 
@@ -176,7 +180,8 @@ class PropertyTaxAnalysis(UnitTaxInfo):
         self.this_year_assessed_value = row[17]
         self.last_year_transitional_assessed_value = row[18]
         self.this_year_transitional_assessed_value = row[19]
-        self.annual_tax = row[20]
+        self.last_year_annual_tax = row[20]
+        self.this_year_annual_tax = row[21]
 
         self.connection_pool.putconn(dbconnection)
         return
@@ -244,7 +249,66 @@ class CityComparables(object):
         json_result = json.dumps(result)
         return result
 
+class RecommendedComparables(object):
 
+    def __init__(self, bbl=None, connection_pool=None):
+
+        self.comparable_bbls_query = 'SELECT similar_bbl FROM similar_bbls WHERE bbl = %s'
+        query_template = 'select * from tax_analysis_recommended_comparables where borough_block_lot IN ('
+        self.comparables = []
+        self.comparableof = bbl
+        self.connection_pool = connection_pool
+
+        query_bbl = create_dashed_bbl(self.comparableof)
+
+        dbconnection = self.connection_pool.getconn()
+        cursor = dbconnection.cursor()
+
+        logging.debug('executing query ' + self.comparable_bbls_query + ' with argument ' + bbl)
+        cursor.execute(self.comparable_bbls_query, (bbl,))
+        rows = cursor.fetchall()
+        if rows is None or len(rows) == 0:
+            return
+        recommended_bbls = [create_dashed_bbl(row[0]) for row in rows]
+        self.query = query_template + ','.join(['%s']*len(recommended_bbls)) + ')'
+
+
+        logging.debug('executing query ' + self.query + ' with argument ' + str(recommended_bbls))
+        cursor.execute(self.query, tuple(recommended_bbls))
+        rows = cursor.fetchall()
+        logging.debug('got ' + str(len(rows)) + ' comparable results')
+        for row in rows:
+            comparable = Comparable()
+            self.create_recommended_comparable_from_row(comparable, row)
+            self.comparables.append(comparable)
+        self.connection_pool.putconn(dbconnection)
+        return
+
+    def create_recommended_comparable_from_row(self, comparable, row):
+        comparable.neighborhood = row[0]
+        comparable.building_class = row[1]
+        comparable.borough_block_lot = row[2]
+        comparable.bbl = comparable.borough_block_lot.replace('-','') if comparable.bbl is None else comparable.bbl
+        logging.debug('bbl set to ' + comparable.bbl + ' from ' + comparable.borough_block_lot)
+        comparable.address = row[3]
+        comparable.year_built = row[4]
+        comparable.total_units = row[5]
+        comparable.gross_square_feet = row[6]
+        comparable.estimated_gross_income = row[7]
+        comparable.gross_income_per_square_foot = row[8]
+        comparable.estimated_expense = row[9]
+        comparable.expense_per_square_foot = row[10]
+        comparable.net_operating_income = row[11]
+        comparable.full_market_value = row[12]
+        comparable.market_value_per_square_foot = row[13]
+        comparable.distance_from_subject_in_miles = row[14]
+        comparable.annual_tax = row[15]
+        comparable.comparableof = row[16]
+
+    def get_json(self):
+        result = [c.get_json() for c in self.comparables]
+        json_result = json.dumps(result)
+        return result
 
 '''
 neighborhood                          | text                  |           |          | 

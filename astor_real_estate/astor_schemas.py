@@ -128,6 +128,8 @@ class PropertyTaxAnalysisSchema(ComparableSchema):
     this_year_assessed_value = fields.Float()
     last_year_transitional_assessed_value = fields.Float()
     this_year_transitional_assessed_value = fields.Float()
+    last_year_annual_tax = fields.Float()
+    this_year_annual_tax = fields.Float()
 
 class UnitAndBuildingTaxAnalysisSchema(Schema):
     unit_tax_analysis = fields.Nested('PropertyTaxAnalysisSchema')
