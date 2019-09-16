@@ -22,8 +22,11 @@ class UnitTaxInfo(object):
         self.estimated_expense = None
         self.expense_per_square_foot = None
         self.net_operating_income = None
+        self.net_operating_income_per_square_foot = None
         self.full_market_value = None
         self.market_value_per_square_foot = None
+        self.net_present_value = None
+        self.net_present_value_per_square_foot = None
         self.last_year_annual_tax = None
         self.this_year_annual_tax = None
 
@@ -85,6 +88,8 @@ class Comparable(UnitTaxInfo):
         self.estimated_expense = row[9]
         self.expense_per_square_foot = row[10]
         self.net_operating_income = row[11]
+        if self.net_operating_income is not None and self.gross_square_feet is not None:
+            self.net_operating_income_per_square_foot = self.net_operating_income / self.gross_square_feet
         self.full_market_value = row[12]
         self.market_value_per_square_foot = row[13]
         self.distance_from_subject_in_miles = row[14]
@@ -115,6 +120,8 @@ class Comparable(UnitTaxInfo):
         self.estimated_expense = row[9]
         self.expense_per_square_foot = row[10]
         self.net_operating_income = row[11]
+        if self.net_operating_income is not None and self.gross_square_feet is not None:
+            self.net_operating_income_per_square_foot = self.net_operating_income / self.gross_square_feet
         self.full_market_value = row[12]
         self.market_value_per_square_foot = row[13]
         self.comparablebbl = row[14]
@@ -172,6 +179,8 @@ class PropertyTaxAnalysis(UnitTaxInfo):
         self.estimated_expense = row[9]
         self.expense_per_square_foot = row[10]
         self.net_operating_income = row[11]
+        if self.net_operating_income is not None and self.gross_square_feet is not None:
+            self.net_operating_income_per_square_foot = self.net_operating_income / self.gross_square_feet
         self.full_market_value = row[12]
         self.market_value_per_square_foot = row[13]
         self.last_year_total_market_value = row[14]
@@ -224,7 +233,7 @@ class UnitAndBuildingTaxAnalysis(object):
 class CityComparables(object):
 
     def __init__(self, bbl=None, connection_pool=None):
-        self.query = 'select * from tax_analysis_city_comparables where comparableof = %s'
+        self.query = 'select DISTINCT * from tax_analysis_city_comparables where comparableof = %s'
         self.comparables = []
         self.comparableof = bbl
         self.connection_pool = connection_pool
@@ -254,7 +263,7 @@ class RecommendedComparables(object):
     def __init__(self, bbl=None, connection_pool=None):
 
         self.comparable_bbls_query = 'SELECT similar_bbl FROM similar_bbls WHERE bbl = %s'
-        query_template = 'select * from tax_analysis_recommended_comparables where borough_block_lot IN ('
+        query_template = 'select DISTINCT * from tax_analysis_recommended_comparables where borough_block_lot IN ('
         self.comparables = []
         self.comparableof = bbl
         self.connection_pool = connection_pool
@@ -299,6 +308,10 @@ class RecommendedComparables(object):
         comparable.estimated_expense = row[9]
         comparable.expense_per_square_foot = row[10]
         comparable.net_operating_income = row[11]
+        if comparable.net_operating_income is not None and comparable.gross_square_feet is not None and comparable.gross_square_feet != 0:
+            comparable.net_operating_income_per_square_foot = comparable.net_operating_income / comparable.gross_square_feet
+            comparable.net_present_value = comparable.net_operating_income/ (.06 - .02)
+            comparable.net_present_value_per_square_foot = comparable.net_present_value / comparable.gross_square_feet
         comparable.full_market_value = row[12]
         comparable.market_value_per_square_foot = row[13]
         comparable.distance_from_subject_in_miles = row[14]
