@@ -38,7 +38,7 @@ class UnitTaxInfo(object):
             borough = self.bbl[0]
             city = get_borough_city(borough)
             state = 'NY'
-            zip = getzipcode(self.address, city, state)
+            zip = None #getzipcode(self.address, city, state)
             if zip is None:
                 zip = ''
             self.full_addr = self.address + ' ' + city + ', ' + state + ' ' + zip
