@@ -204,6 +204,8 @@ def get_city_tax_comparable_buildings(bbl):
         building_bbl = bbl
     city_comparables = CityComparables(building_bbl, connection_pool)
     city_comparables_json = city_comparables.get_json()
+    for cj in city_comparables_json:
+        cj['source'] = 'city'
     result = json.dumps(city_comparables_json)
 
     return result
@@ -215,7 +217,26 @@ def get_recommended_tax_comparable_buildings(bbl):
         building_bbl = bbl
     recommended_comparables = RecommendedComparables(building_bbl, connection_pool)
     recommended_comparables_json = recommended_comparables.get_json()
+    for rj in recommended_comparables_json:
+        rj['source'] = 'recommended'
     result = json.dumps(recommended_comparables_json)
+
+    return result
+
+def get_combined_tax_comparable_buildings(bbl):
+    connection_pool = getDBConnectionPool(cfg_dir + '/' + env + '-api.ini')
+    building_bbl = get_building_bbl(bbl, connection_pool)
+    if building_bbl is None:
+        building_bbl = bbl
+    recommended_comparables = RecommendedComparables(building_bbl, connection_pool)
+    recommended_comparables_json = recommended_comparables.get_json()
+    for rj in recommended_comparables_json:
+        rj['source'] = 'recommended'
+    city_comparables = CityComparables(building_bbl, connection_pool)
+    city_comparables_json = city_comparables.get_json()
+    for cj in city_comparables_json:
+        cj['source'] = 'city'
+    result = json.dumps(recommended_comparables_json + city_comparables_json)
 
     return result
 
