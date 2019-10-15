@@ -240,5 +240,13 @@ def get_combined_tax_comparable_buildings(bbl):
 
     return result
 
+def get_mailing_address(bbl):
+    connection_pool = getDBConnectionPool(cfg_dir + '/' + env + '-api.ini')
+    mailing_address = MailingAddress(bbl, connection_pool)
+    mailing_address_json = mailing_address.get_json()
+    result = json.dumps(mailing_address_json)
+    return result
+
+
 if __name__ == '__main__':
     main(sys.argv[1:])

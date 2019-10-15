@@ -814,3 +814,29 @@ class PropertySale:
         self.date = date
         self.seller = seller
         self.buyer = buyer
+
+class MailingAddress:
+    def __init__(self, bbl, connection_pool=None):
+        self.bbl = bbl
+        self.address = None
+        self.connection_pool = connection_pool
+
+    def _load(self):
+        if self.connection_pool is None:
+            return None
+        query = '''SELECT bbl, address FROM mailing_addresses WHERE bbl=%s'''
+        dbconnection = self.connection_pool.getconn()
+
+        cursor = dbconnection.cursor()
+        cursor.execute(query, (self.bbl,))
+        row = cursor.fetchone()
+        if row is not None:
+            self.address = row[1]
+
+    def get_json(self):
+
+        if self.address is None:
+            self._load()
+
+        schema = MailingAddressSchema()
+        return schema.dump(self)

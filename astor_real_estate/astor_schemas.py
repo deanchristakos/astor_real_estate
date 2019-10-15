@@ -140,3 +140,8 @@ class UnitAndBuildingTaxAnalysisSchema(Schema):
 
 class CondoBuildingSchema(BuildingSchema):
     units = fields.List(fields.Nested('CondoUnitSchema'))
+
+class MailingAddressSchema(Schema):
+    bbl = fields.Str()
+    address = fields.Str()
+
