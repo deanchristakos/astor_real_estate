@@ -68,9 +68,10 @@ class Comparable(UnitTaxInfo):
         self.market_value_per_square_foot = None
         self.comparablebbl = None
         self.annual_tax = None
+        self.comp_quality = None
 
     def __repr__(self):
-        return "<Comparable(bbl={self.comparablebbl!r},comparablebbl={self.comparablebbl!r})>".format(self=self)
+        return "<Comparable(bbl={self.bbl!r},comparablebbl={self.comparablebbl!r})>".format(self=self)
 
     def create_comparable_from_row(self, row):
 
@@ -94,6 +95,7 @@ class Comparable(UnitTaxInfo):
         self.market_value_per_square_foot = row[13]
         self.distance_from_subject_in_miles = row[14]
         self.comparablebbl = row[15]
+        self.comp_quality = row[-1]
 
         return
 
@@ -233,7 +235,10 @@ class UnitAndBuildingTaxAnalysis(object):
 class CityComparables(object):
 
     def __init__(self, bbl=None, connection_pool=None):
-        self.query = 'select DISTINCT * from tax_analysis_city_comparables where comparableof = %s'
+        self.query = """select DISTINCT * from tax_analysis_city_comparables c
+                            JOIN similar_bbls s on REPLACE(c.borough_block_lot, '-', '') = s.similar_bbl
+                            AND REPLACE(c.comparableof, '-','') = s.bbl
+                            where c.comparableof = %s"""
         self.comparables = []
         self.comparableof = bbl
         self.connection_pool = connection_pool
@@ -262,7 +267,7 @@ class RecommendedComparables(object):
 
     def __init__(self, bbl=None, connection_pool=None):
 
-        self.comparable_bbls_query = 'SELECT similar_bbl FROM similar_bbls WHERE bbl = %s'
+        self.comparable_bbls_query = 'SELECT similar_bbl, score FROM similar_bbls WHERE bbl = %s'
         query_template = 'select DISTINCT * from tax_analysis_recommended_comparables where borough_block_lot IN ('
         self.comparables = []
         self.comparableof = bbl
@@ -279,6 +284,11 @@ class RecommendedComparables(object):
         if rows is None or len(rows) == 0:
             return
         recommended_bbls = [create_dashed_bbl(row[0]) for row in rows]
+
+        scores = {}
+        for row in rows:
+            scores[row[0]] = row[1]
+
         self.query = query_template + ','.join(['%s']*len(recommended_bbls)) + ')'
 
 
@@ -289,6 +299,8 @@ class RecommendedComparables(object):
         for row in rows:
             comparable = Comparable()
             self.create_recommended_comparable_from_row(comparable, row)
+            if comparable.borough_block_lot.replace('-','') in scores.keys():
+                comparable.comp_quality = scores[comparable.borough_block_lot.replace('-','')]
             self.comparables.append(comparable)
         self.connection_pool.putconn(dbconnection)
         return
@@ -317,6 +329,7 @@ class RecommendedComparables(object):
         comparable.distance_from_subject_in_miles = row[14]
         comparable.annual_tax = row[15]
         comparable.comparableof = row[16]
+        comparable.comp_quality = row[-1]
 
     def get_json(self):
         result = [c.get_json() for c in self.comparables]

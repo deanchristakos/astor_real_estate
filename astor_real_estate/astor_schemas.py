@@ -121,6 +121,7 @@ class ComparableSchema(Schema):
     annual_tax = fields.Float()
     comparable_of = fields.Str()
     full_address = fields.Str()
+    comp_quality = fields.Float()
 
 
 class PropertyTaxAnalysisSchema(ComparableSchema):
