@@ -33,7 +33,7 @@ def delete_tax_tag(propertyid, username, tag):
         return "{}"
 
     propertyinfo = {}
-    dbconnection = getDBConnection(cfg_dir + dbenv + "-api.ini")
+    dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
 
     status = dict()
     cur = dbconnection.cursor()
@@ -57,7 +57,7 @@ def add_tax_tag(propertyid, username, tag):
     logging.debug('adding tag ' + tag + ' to property id ' + propertyid + ' for user ' + username)
 
     propertyinfo = {}
-    dbconnection = getDBConnection(cfg_dir + dbenv + "-api.ini")
+    dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
 
     status = dict()
     cur = dbconnection.cursor()
@@ -80,7 +80,7 @@ def get_tax_tags(propertyid, username):
         return "{}"
 
     propertyinfo = {}
-    dbconnection = getDBConnection(cfg_dir + dbenv + "-api.ini")
+    dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
 
     cur = dbconnection.cursor()
     query = "SELECT tag FROM tax_certiorari_tags WHERE propertyid = %s AND username = %s"
