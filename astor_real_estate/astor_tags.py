@@ -1,15 +1,5 @@
-#!/usr/bin/python
 import logging
 logging.basicConfig(filename='/var/log/www/property_tags.log',level=logging.DEBUG)
-import psycopg2
-import sys
-from config_mapper import *
-import datetime
-import json
-import json
-import gviz_api
-import getopt
-from clean_real_estate_data import *
 from astor_square_utils import *
 import os
 
