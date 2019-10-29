@@ -49,7 +49,7 @@ class Comparable(UnitTaxInfo):
 
     def __init__(self, bbl=None, connection_pool=None):
         UnitTaxInfo.__init__(self, bbl, connection_pool)
-        self.query = 'select * from tax_analysis_city_comparables where borough_block_lot = %s'
+        self.query = 'select DISTINCT * from tax_analysis_city_comparables where borough_block_lot = %s'
 
         self.bbl = None
         self.neighborhood = None
