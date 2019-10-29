@@ -76,21 +76,68 @@ def add_tax_tag(propertyid, username, tag):
 def get_tax_tags(propertyid, username):
 
     dbenv = env
-    if propertyid == None:
-        return "{}"
 
     propertyinfo = {}
     dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
 
     cur = dbconnection.cursor()
-    query = "SELECT tag FROM tax_certiorari_tags WHERE propertyid = %s AND username = %s"
 
-    cur.execute(query, (propertyid, username))
+    args = (username,)
+    query = "SELECT DISTINCT tag FROM tax_certiorari_tags WHERE username = %s"
+    if propertyid is not None:
+        query += ' AND propertyid = %s'
+        args = (username, propertyid,)
+
+    cur.execute(query, args)
     rows = cur.fetchall()
     taglist = []
     for row in rows:
         taglist.append(row[0])
-    result = dict()
-    result[propertyid] = taglist
-    logging.debug('taglist for property id ' + propertyid + ' with username ' + username + ' is ' + str(taglist))
+    if propertyid is not None:
+        result = dict()
+        result[propertyid] = taglist
+    else:
+        result = taglist
+    logging.debug('tax taglist for property id ' + str(propertyid) + ' with username ' + str(username) + ' is ' + str(result))
     return json.dumps(result)
+
+def get_property_tags(propertyid, username = None):
+    dbenv = env
+    dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
+    query = 'SELECT DISTINCT propertyid, tag FROM property_tags'
+
+    cur = dbconnection.cursor()
+    if propertyid is None:
+        query += ' ORDER BY tag'
+        cur.execute(query)
+    else:
+        query += ' WHERE propertyid = %s ORDER BY tag'
+        cur.execute(query, (propertyid,))
+    rows = cur.fetchall()
+    result = dict()
+    if propertyid is not None:
+        taglist = [row[1] for row in rows]
+        result[propertyid] = taglist
+    else:
+        for row in rows:
+            try:
+                taglist = result[row[0]]
+                taglist.append(row[1])
+            except KeyError as e:
+                result[row[0]] = [row[1]]
+
+    if propertyid is not None:
+        logging.debug('taglist for for property id ' + str(propertyid) + ' with username ' + str(username) + ' is ' + str(taglist))
+    else:
+        logging.debug('all tags for username ' + str(username) + ' is ' + str(result))
+    return json.dumps(result)
+
+def property_tag_list():
+    dbenv = env
+    dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
+    query = 'SELECT DISTINCT tag FROM property_tags ORDER BY tag'
+    cur = dbconnection.cursor()
+    cur.execute(query)
+    rows = cur.fetchall()
+    taglist = [row[0] for row in rows]
+    return json.dumps(taglist)
