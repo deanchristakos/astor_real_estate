@@ -247,6 +247,29 @@ def get_mailing_address(bbl):
     result = json.dumps(mailing_address_json)
     return result
 
+def get_taxcert_neighborhoods():
+    connection_pool = getDBConnectionPool(cfg_dir + '/' + env + '-api.ini')
+    query = 'SELECT DISTINCT neighborhood FROM building_tax_analysis ORDER BY neighborhood ;'
+    dbconnection = connection_pool.getconn()
+    cursor = dbconnection.cursor()
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    nlist = [row[0].lower() for row in rows]
+    neighborhood_list = []
+
+    for n in nlist:
+        dashed_split = [n1.capitalize() for n1 in n.split('-')]
+
+        new_dashed_split = []
+        for d in dashed_split:
+            n_list_by_space = []
+            spaced_split = [s.capitalize() for s in d.split()]
+            new_dashed_space = ' '.join(spaced_split)
+            new_dashed_split.append(new_dashed_space)
+        new_n = '-'.join(new_dashed_split)
+        neighborhood_list.append(new_n)
+    result = json.dumps(neighborhood_list)
+    return result
 
 if __name__ == '__main__':
     main(sys.argv[1:])
