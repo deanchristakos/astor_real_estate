@@ -95,7 +95,7 @@ class Comparable(UnitTaxInfo):
         self.market_value_per_square_foot = row[13]
         self.distance_from_subject_in_miles = row[14]
         self.comparablebbl = row[15]
-        self.comp_quality = row[-1]
+        self.comp_quality = row[-2]
 
         return
 
