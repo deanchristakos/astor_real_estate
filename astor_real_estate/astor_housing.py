@@ -241,7 +241,7 @@ class CityComparables(object):
     def __init__(self, bbl=None, connection_pool=None):
         self.query = """select DISTINCT * from tax_analysis_city_comparables c
                             JOIN similar_bbls s on REPLACE(c.borough_block_lot, '-', '') = s.similar_bbl
-                            AND REPLACE(c.comparableof, '-','') = s.bbl
+                            AND REPLACE(c.comparableof, '-','') = s.bbl AND s.city_comp = True
                             where c.comparableof = %s"""
         self.comparables = []
         self.comparableof = bbl
