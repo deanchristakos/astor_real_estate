@@ -98,7 +98,7 @@ def get_building_by_bbl(bbl):
     if (lot >= 1000 and lot < 7500) or (lot >= 8000):
         # this is a condo unit
         # get condo building
-        query_tabl = 'tc234'
+        query_table = 'tc234'
         query = 'SELECT condo_nm FROM tc234 WHERE bble = %s'
         cursor.execute(query, (bbl,))
         row = cursor.fetchone()

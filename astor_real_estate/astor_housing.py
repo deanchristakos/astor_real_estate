@@ -42,7 +42,7 @@ class UnitTaxInfo(object):
             if zip is None:
                 zip = ''
             self.full_addr = self.address + ' ' + city + ', ' + state + ' ' + zip
-        return self.full_addr
+        return self.full_addr.strip()
 
 
 class Comparable(UnitTaxInfo):
@@ -69,6 +69,8 @@ class Comparable(UnitTaxInfo):
         self.comparablebbl = None
         self.annual_tax = None
         self.comp_quality = None
+        self.year = None
+        self.fiscal_year = None
 
     def __repr__(self):
         return "<Comparable(bbl={self.bbl!r},comparablebbl={self.comparablebbl!r})>".format(self=self)
@@ -95,6 +97,8 @@ class Comparable(UnitTaxInfo):
         self.market_value_per_square_foot = row[13]
         self.distance_from_subject_in_miles = row[14]
         self.comparablebbl = row[15]
+        self.year = row[16]
+        self.fiscal_year = row[17]
         self.comp_quality = row[-2]
 
         return
@@ -329,6 +333,8 @@ class RecommendedComparables(object):
         comparable.distance_from_subject_in_miles = row[14]
         comparable.annual_tax = row[15]
         comparable.comparableof = row[16]
+        comparable.year = row[17]
+        comparable.fiscal_year = row[18]
         comparable.comp_quality = row[-1]
 
     def get_json(self):
