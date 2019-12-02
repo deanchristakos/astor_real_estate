@@ -71,6 +71,8 @@ class Comparable(UnitTaxInfo):
         self.comp_quality = None
         self.year = None
         self.fiscal_year = None
+        self.lat = None
+        self.long = None
 
     def __repr__(self):
         return "<Comparable(bbl={self.bbl!r},comparablebbl={self.comparablebbl!r})>".format(self=self)
@@ -99,7 +101,9 @@ class Comparable(UnitTaxInfo):
         self.comparablebbl = row[15]
         self.year = row[16]
         self.fiscal_year = row[17]
-        self.comp_quality = row[-2]
+        self.comp_quality = row[18]
+        self.lat = row[19]
+        self.long = row[20]
 
         return
 
@@ -149,7 +153,11 @@ class PropertyTaxAnalysis(UnitTaxInfo):
     def __init__(self, bbl=None, connection_pool=None):
         UnitTaxInfo.__init__(self, bbl, connection_pool)
 
-        self.query = 'select * from building_tax_analysis where borough_block_lot = %s'
+        self.query = '''SELECT * 
+                        FROM building_tax_analysis b
+                        LEFT JOIN bbl_locations l ON
+                        b.borough_block_lot = l.borough_block_lot 
+                        WHERE b.borough_block_lot = %s'''
 
         self.bbl = bbl
         self.last_year_total_market_value = None
@@ -158,6 +166,8 @@ class PropertyTaxAnalysis(UnitTaxInfo):
         self.this_year_assessed_value = None
         self.last_year_transitional_assessed_value = None
         self.this_year_transitional_assessed_value = None
+        self.lat = None
+        self.long = None
 
     def __repr__(self):
         return "<PropertyTaxAnalysis(bbl={self.bbl!r})>".format(self=self)
@@ -197,6 +207,8 @@ class PropertyTaxAnalysis(UnitTaxInfo):
         self.this_year_transitional_assessed_value = row[19]
         self.last_year_annual_tax = row[20]
         self.this_year_annual_tax = row[21]
+        self.lat = row[25]
+        self.long = row[26]
 
         self.connection_pool.putconn(dbconnection)
         return
@@ -239,9 +251,32 @@ class UnitAndBuildingTaxAnalysis(object):
 class CityComparables(object):
 
     def __init__(self, bbl=None, connection_pool=None):
-        self.query = """select DISTINCT * from tax_analysis_city_comparables c
+        self.query = """SELECT DISTINCT
+                            c.neighborhood,
+                            c.building_class,
+                            c.borough_block_lot,
+                            c.address,
+                            c.year_built,
+                            c.total_units,
+                            c.gross_square_feet,
+                            c.estimated_gross_income,
+                            c.gross_income_per_square_foot,
+                            c.estimated_expense,
+                            c.expense_per_square_foot,
+                            c.net_operating_income,
+                            c.full_market_value,
+                            c.market_value_per_square_foot,
+                            c.distance_from_subject_in_miles,
+                            c.comparableof,
+                            c.year,
+                            c.fiscal_year,
+                            s.score,
+                            l.lat,
+                            l.long 
+                            FROM tax_analysis_city_comparables c
                             JOIN similar_bbls s on REPLACE(c.borough_block_lot, '-', '') = s.similar_bbl
                             AND REPLACE(c.comparableof, '-','') = s.bbl AND s.city_comp = True
+                            LEFT JOIN bbl_locations l ON l.borough_block_lot = c.borough_block_lot
                             where c.comparableof = %s"""
         self.comparables = []
         self.comparableof = bbl
@@ -273,6 +308,32 @@ class RecommendedComparables(object):
 
         self.comparable_bbls_query = 'SELECT similar_bbl, score FROM similar_bbls WHERE bbl = %s'
         query_template = 'select DISTINCT * from tax_analysis_recommended_comparables where borough_block_lot IN ('
+        query_template = '''SELECT DISTINCT
+                            c.neighborhood,
+                            c.building_class,
+                            c.borough_block_lot,
+                            c.address,
+                            c.year_built,
+                            c.total_units,
+                            c.gross_square_feet,
+                            c.estimated_gross_income,
+                            c.gross_income_per_square_foot,
+                            c.estimated_expense,
+                            c.expense_per_square_foot,
+                            c.net_operating_income,
+                            c.full_market_value,
+                            c.market_value_per_square_foot,
+                            c.distance_from_subject_in_miles,
+                            c.annual_tax,
+                            c.comparableof,
+                            c.year,
+                            c.fiscal_year,
+                            l.lat,
+                            l.long
+                            FROM tax_analysis_recommended_comparables c
+                            LEFT JOIN bbl_locations l ON l.borough_block_lot = c.borough_block_lot
+                            where c.borough_block_lot IN (
+                            '''
         self.comparables = []
         self.comparableof = bbl
         self.connection_pool = connection_pool
@@ -335,7 +396,8 @@ class RecommendedComparables(object):
         comparable.comparableof = row[16]
         comparable.year = row[17]
         comparable.fiscal_year = row[18]
-        comparable.comp_quality = row[-1]
+        comparable.lat = row[19]
+        comparable.long = row[20]
 
     def get_json(self):
         result = [c.get_json() for c in self.comparables]

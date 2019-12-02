@@ -69,6 +69,8 @@ class BuildingSchema(Schema):
     sales = fields.List(fields.Nested('PropertySaleSchema'))
     units = fields.List(fields.Nested('UnitSchema'))
     full_address = fields.Str()
+    lat = fields.Float()
+    long = fields.Float()
 
 class ApartmentBuildingSchema(BuildingSchema):
     cur_fv_l = fields.Float()
@@ -124,6 +126,8 @@ class ComparableSchema(Schema):
     comp_quality = fields.Float()
     year = fields.Int()
     fiscal_year = fields.Str()
+    lat = fields.Float()
+    long = fields.Float()
 
 
 class PropertyTaxAnalysisSchema(ComparableSchema):
