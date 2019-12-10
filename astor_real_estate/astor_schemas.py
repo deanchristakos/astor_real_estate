@@ -129,6 +129,18 @@ class ComparableSchema(Schema):
     lat = fields.Float()
     long = fields.Float()
 
+class CityComparableSchema(ComparableSchema):
+
+
+    unadjusted_estimated_gross_income = fields.Float()
+    unadjusted_gross_income_per_square_foot = fields.Float()
+    unadjusted_estimated_expense = fields.Float()
+    unadjusted_expense_per_square_foot = fields.Float()
+    unadjusted_net_operating_income = fields.Float()
+    unadjusted_net_operating_income_per_square_foot = fields.Float()
+    unadjusted_full_market_value = fields.Float()
+    unadjusted_market_value_per_square_foot = fields.Float()
+
 
 class PropertyTaxAnalysisSchema(ComparableSchema):
 

@@ -248,6 +248,49 @@ class UnitAndBuildingTaxAnalysis(object):
         schema = UnitAndBuildingTaxAnalysisSchema()
         return schema.dump(self)
 
+class CityComparable(Comparable):
+    def __init__(self, bbl=None, connection_pool=None):
+        Comparable.__init__(self, bbl, connection_pool)
+
+        self.unadjusted_income_query = '''SELECT 
+                                        estimated_gross_income, 
+                                        gross_income_per_square_foot, 
+                                        estimated_expense, 
+                                        expense_per_square_foot, 
+                                        net_operating_income, 
+                                        full_market_value, 
+                                        market_value_per_square_foot 
+                                    FROM city_comparables_unadjusted 
+                                    WHERE year = %s
+                                    AND borough_block_lot = %s'''
+
+        self.unadjusted_estimated_gross_income = None
+        self.unadjusted_gross_income_per_square_foot = None
+        self.unadjusted_estimated_expense = None
+        self.unadjusted_expense_per_square_foot = None
+        self.unadjusted_net_operating_income = None
+        self.unadjusted_full_market_value = None
+        self.unadjusted_market_value_per_square_foot = None
+
+    def add_unadjusted_data_from_row(self, row):
+        self.unadjusted_estimated_gross_income = row[0]
+        self.unadjusted_gross_income_per_square_foot = row[1]
+        self.unadjusted_estimated_expense = row[2]
+        self.unadjusted_expense_per_square_foot = row[3]
+        self.unadjusted_net_operating_income = row[4]
+        self.unadjusted_full_market_value = row[5]
+        self.unadjusted_market_value_per_square_foot = row[6]
+
+    def get_json(self):
+        if self.bbl is None and self.connection_pool is not None:
+            logging.debug('loading comparable attributes')
+            self.load_comparable_attributes()
+        elif self.bbl is None and self.connection_pool is None:
+            logging.debug('No bbl. Returning blank result')
+            return '{}'
+        schema = CityComparableSchema()
+        return schema.dump(self)
+
 class CityComparables(object):
 
     def __init__(self, bbl=None, connection_pool=None):
@@ -290,9 +333,14 @@ class CityComparables(object):
         cursor.execute(self.query, (query_bbl,))
         rows = cursor.fetchall()
         logging.debug('got ' + str(len(rows)) + ' comparable results')
+
         for row in rows:
-            comparable = Comparable()
+            comparable = CityComparable()
             comparable.create_comparable_from_row(row)
+            cursor.execute(comparable.unadjusted_income_query, (comparable.year, comparable.borough_block_lot))
+            unadjusted_row = cursor.fetchone()
+            if unadjusted_row is not None:
+                comparable.add_unadjusted_data_from_row(unadjusted_row)
             self.comparables.append(comparable)
         self.connection_pool.putconn(dbconnection)
         return
