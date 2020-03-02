@@ -249,7 +249,7 @@ def get_mailing_address(bbl):
 
 def get_taxcert_neighborhoods():
     connection_pool = getDBConnectionPool(cfg_dir + '/' + env + '-api.ini')
-    query = 'SELECT DISTINCT neighborhood FROM building_tax_analysis ORDER BY neighborhood ;'
+    query = 'SELECT DISTINCT neighborhood FROM building_tax_analysis WHERE neighborhood IS NOT NULL ORDER BY neighborhood;'
     dbconnection = connection_pool.getconn()
     cursor = dbconnection.cursor()
     cursor.execute(query)

@@ -207,8 +207,8 @@ class PropertyTaxAnalysis(UnitTaxInfo):
         self.this_year_transitional_assessed_value = row[19]
         self.last_year_annual_tax = row[20]
         self.this_year_annual_tax = row[21]
-        self.lat = row[25]
-        self.long = row[26]
+        self.lat = row[27]
+        self.long = row[28]
 
         self.connection_pool.putconn(dbconnection)
         return
@@ -218,7 +218,12 @@ class PropertyTaxAnalysis(UnitTaxInfo):
             self.load_tax_analysis_attributes()
         elif self.neighborhood is None and self.connection_pool is None:
             return ''
-        schema = PropertyTaxAnalysisSchema()
+        try:
+            schema = PropertyTaxAnalysisSchema()
+            result = schema.dump(self)
+        except Exception as e:
+            logging.error('problem getting schema: ' + str(e))
+            result = json.dump({})
         return schema.dump(self)
 
 
