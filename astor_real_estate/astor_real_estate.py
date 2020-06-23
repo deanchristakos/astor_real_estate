@@ -175,6 +175,7 @@ def get_similar_buildings(bbl):
 
 
 def get_building_tax_analysis(bbl):
+    logging.debug('getting data from ' + env + ' database')
     connection_pool = getDBConnectionPool(cfg_dir + '/' + env + '-api.ini')
     building_bbl = get_building_bbl(bbl, connection_pool)
 
