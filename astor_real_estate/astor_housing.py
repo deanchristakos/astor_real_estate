@@ -157,7 +157,7 @@ class PropertyTaxAnalysis(UnitTaxInfo):
                         FROM building_tax_analysis b
                         LEFT JOIN bbl_locations l ON
                         b.borough_block_lot = l.borough_block_lot 
-                        WHERE b.borough_block_lot = %s'''
+                        WHERE b.borough_block_lot = %s AND fiscal_year IS NOT NULL ORDER BY fiscal_year DESC'''
 
         self.bbl = bbl
         self.last_year_total_market_value = None
