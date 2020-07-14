@@ -322,7 +322,7 @@ class CityComparables(object):
                             l.lat,
                             l.long 
                             FROM tax_analysis_city_comparables c
-                            JOIN similar_bbls s on REPLACE(c.borough_block_lot, '-', '') = s.similar_bbl
+                            LEFT JOIN similar_bbls s on REPLACE(c.borough_block_lot, '-', '') = s.similar_bbl
                             AND REPLACE(c.comparableof, '-','') = s.bbl AND s.city_comp = True
                             LEFT JOIN bbl_locations l ON l.borough_block_lot = c.borough_block_lot
                             where c.comparableof = %s"""
