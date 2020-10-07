@@ -1,4 +1,6 @@
 #!/usr/bin/python3
+import logging
+logging.basicConfig(format='%(asctime)s %(funcName)s %(message)s', filename='/var/log/astor_square/astor_search.log',level=logging.DEBUG)
 import sys
 from astor_globals import *
 from astor_square_utils import *
@@ -36,6 +38,7 @@ def search_address(addr):
             address_results.append(entry)
         else:
             query = "SELECT DISTINCT borough_block_lot, neighborhood, address FROM building_tax_analysis WHERE address LIKE %s AND address LIKE %s"
+            logging.debug("api_db_initfile is " + api_db_initfile)
             dbconnection = getDBConnection(api_db_initfile)
             cursor = dbconnection.cursor()
             try:
