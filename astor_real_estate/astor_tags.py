@@ -26,13 +26,13 @@ except KeyError as e:
 if cfg_dir is None:
     cfg_dir = '/usr/local/etc/astor_square/'
 
+
 def delete_tax_tag(propertyid, username, tag):
 
     dbenv = env
-    if propertyid == None:
+    if propertyid is None:
         return "{}"
 
-    propertyinfo = {}
     dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
 
     status = dict()
@@ -51,12 +51,11 @@ def delete_tax_tag(propertyid, username, tag):
 def add_tax_tag(propertyid, username, tag):
 
     dbenv = env
-    if propertyid == None:
+    if propertyid is None:
         return "{}"
 
     logging.debug('adding tag ' + tag + ' to property id ' + propertyid + ' for user ' + username)
 
-    propertyinfo = {}
     dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
 
     status = dict()
@@ -77,7 +76,6 @@ def get_tax_tags(propertyid, username):
 
     dbenv = env
 
-    propertyinfo = {}
     dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
 
     cur = dbconnection.cursor()
@@ -100,6 +98,7 @@ def get_tax_tags(propertyid, username):
         result = taglist
     logging.debug('tax taglist for property id ' + str(propertyid) + ' with username ' + str(username) + ' is ' + str(result))
     return json.dumps(result)
+
 
 def get_property_tags(propertyid, username = None):
     dbenv = env
@@ -131,6 +130,7 @@ def get_property_tags(propertyid, username = None):
     else:
         logging.debug('all tags for username ' + str(username) + ' is ' + str(result))
     return json.dumps(result)
+
 
 def property_tag_list():
     dbenv = env
