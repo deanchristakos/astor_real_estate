@@ -141,3 +141,15 @@ def property_tag_list():
     rows = cur.fetchall()
     taglist = [row[0] for row in rows]
     return json.dumps(taglist)
+
+
+def get_access_tax_properties(username):
+    dbenv = env
+    dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
+    query = 'SELECT DISTINCT propertyid FROM access_tax_property_tags WHERE username = %s ORDER BY propertyid'
+    cur = dbconnection.cursor()
+    cur.execute(query, (username,))
+    rows = cur.fetchall()
+    propertyids = [row[0] for row in rows]
+    return json.dumps(propertyids);
+    return
