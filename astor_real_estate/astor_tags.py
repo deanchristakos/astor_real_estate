@@ -37,11 +37,15 @@ def delete_tax_tag(propertyid, username, tag):
 
     status = dict()
     cur = dbconnection.cursor()
-    query = "delete from tax_certiorari_tags where propertyid = %s AND tag = %s AND username = %s"
+    query = "delete from tax_certiorari_tags where propertyid = %s AND tag = %s AND username = %s "  + " AND required != true"
     try:
         cur.execute(query, (propertyid, tag, username))
-        dbconnection.commit()
-        status['status'] = 'SUCCESS'
+        if cur.rowcount > 0:
+            status['status'] = 'SUCCESS'
+            dbconnection.commit()
+        else:
+            logging.error('no rows deleted either because the tag does not exist or because it is a required tag')
+            status['status'] = 'FAIL'
     except Exception as e:
         logging.error('error deleting tag ' + tag + ' from property id ' + propertyid + ': ' + str(e))
         status['status'] = 'FAIL'
@@ -100,6 +104,62 @@ def get_tax_tags(propertyid, username):
     return json.dumps(result)
 
 
+def get_required_tax_tags(propertyid, username):
+
+    dbenv = env
+
+    dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
+
+    cur = dbconnection.cursor()
+
+    args = (username,)
+    query = "SELECT DISTINCT tag FROM tax_certiorari_tags WHERE username = %s AND required = true"
+    if propertyid is not None:
+        query += ' AND propertyid = %s'
+        args = (username, propertyid,)
+
+    cur.execute(query, args)
+    rows = cur.fetchall()
+    taglist = []
+    for row in rows:
+        taglist.append(row[0])
+    if propertyid is not None:
+        result = dict()
+        result[propertyid] = taglist
+    else:
+        result = taglist
+    logging.debug('tax taglist for property id ' + str(propertyid) + ' with username ' + str(username) + ' is ' + str(result))
+    return json.dumps(result)
+
+
+def get_extended_tax_tags(propertyid, username):
+
+    dbenv = env
+
+    dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
+
+    cur = dbconnection.cursor()
+
+    args = (username,)
+    query = "SELECT DISTINCT tag, required FROM tax_certiorari_tags WHERE username = %s"
+    if propertyid is not None:
+        query += ' AND propertyid = %s'
+        args = (username, propertyid,)
+
+    cur.execute(query, args)
+    rows = cur.fetchall()
+    taglist = []
+    for row in rows:
+        taglist.append({"tag":row[0], "required":row[1]})
+    if propertyid is not None:
+        result = dict()
+        result[propertyid] = taglist
+    else:
+        result = taglist
+    logging.debug('tax taglist for property id ' + str(propertyid) + ' with username ' + str(username) + ' is ' + str(result))
+    return json.dumps(result)
+
+
 def get_property_tags(propertyid, username = None):
     dbenv = env
     dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
@@ -122,6 +182,38 @@ def get_property_tags(propertyid, username = None):
             try:
                 taglist = result[row[0]]
                 taglist.append(row[1])
+            except KeyError as e:
+                result[row[0]] = [row[1]]
+
+    if propertyid is not None:
+        logging.debug('taglist for for property id ' + str(propertyid) + ' with username ' + str(username) + ' is ' + str(taglist))
+    else:
+        logging.debug('all tags for username ' + str(username) + ' is ' + str(result))
+    return json.dumps(result)
+
+
+def get_extended_property_tags(propertyid, username = None):
+    dbenv = env
+    dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
+    query = 'SELECT DISTINCT propertyid, tag, required FROM property_tags'
+
+    cur = dbconnection.cursor()
+    if propertyid is None:
+        query += ' ORDER BY tag'
+        cur.execute(query)
+    else:
+        query += ' WHERE propertyid = %s ORDER BY tag'
+        cur.execute(query, (propertyid,))
+    rows = cur.fetchall()
+    result = dict()
+    if propertyid is not None:
+        taglist = [row[1] for row in rows]
+        result[propertyid] = taglist
+    else:
+        for row in rows:
+            try:
+                taglist = result[row[0]]
+                taglist.append({"tag":row[1], "required":row[2]})
             except KeyError as e:
                 result[row[0]] = [row[1]]
 
