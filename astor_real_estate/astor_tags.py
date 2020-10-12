@@ -37,7 +37,7 @@ def delete_tax_tag(propertyid, username, tag):
 
     status = dict()
     cur = dbconnection.cursor()
-    query = "delete from tax_certiorari_tags where propertyid = %s AND tag = %s AND username = %s "  + " AND required != true"
+    query = "delete from tax_certiorari_tags where propertyid = %s AND tag = %s AND username = %s "  + " AND (required != true OR required IS NULL)"
     try:
         cur.execute(query, (propertyid, tag, username))
         if cur.rowcount > 0:
