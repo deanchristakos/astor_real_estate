@@ -156,7 +156,8 @@ def get_similar_buildings(bbl):
     if len(bldg.nearby_buildings) == 0:
         bldg.load_nearby_buildings()
     nearby_buildings = bldg.nearby_buildings
-    nearby_attributes = [nb.get_attributes_as_array() for nb in nearby_buildings]
+
+    nearby_attributes = [nb.get_attributes_as_array() for nb in nearby_buildings if None not in nb.get_attributes_as_array()]
 
     neigh = NearestNeighbors(algorithm='brute')
     neigh.fit(nearby_attributes)
@@ -271,6 +272,39 @@ def get_taxcert_neighborhoods():
         neighborhood_list.append(new_n)
     result = json.dumps(neighborhood_list)
     return result
+
+
+def get_address_url_match(addr_url):
+    dbconnection = getDBConnection(cfg_dir + '/' + env + '-api.ini')
+    cursor = dbconnection.cursor()
+    query = "SELECT DISTINCT address from building_tax_analysis WHERE %s = LOWER(REPLACE(address, ' ', ''))"
+    cursor.execute(query, (addr_url,))
+    address_result = cursor.fetchone()
+    if address_result is not None:
+        address_list = list(address_result)
+    else:
+        address_list = []
+    result = json.dumps(address_list)
+    return result
+
+
+def get_calculated_tax(bbl, year):
+    query = 'SELECT tax FROM calculated_tax WHERE bbl = %s'
+    if year is not None:
+        query += ' AND year = %s'
+        args = (bbl, year)
+    else:
+        args = (bbl,)
+
+    query += ' ORDER BY year DESC'
+    dbconnection = getDBConnection(cfg_dir + '/' + env + '-api.ini')
+    cursor = dbconnection.cursor()
+    cursor.execute(query, args)
+    rows = cursor.fetchall()
+    result_list = [r[0] for r in rows]
+    result = json.dumps(result_list)
+    return result
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])
