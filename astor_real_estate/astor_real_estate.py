@@ -274,10 +274,22 @@ def get_taxcert_neighborhoods():
     return result
 
 
+def eliminate_ordinals(addr_url):
+    match = re.match('([\d+\-]+[a-z\-]+\d+)([a-z]{2})([a-z\-]+)', addr_url)
+    if (match):
+        chars_after_streetnum = match.group(2)
+        if chars_after_streetnum == 'st' or chars_after_streetnum == 'rd' or chars_after_streetnum == 'nd' or \
+            chars_after_streetnum == 'th':
+            addr_url = match.group(1) + match.group(3)
+    return addr_url
+
+
 def get_address_url_match(addr_url):
     dbconnection = getDBConnection(cfg_dir + '/' + env + '-api.ini')
     cursor = dbconnection.cursor()
     query = "SELECT DISTINCT address from building_tax_analysis WHERE %s = LOWER(REPLACE(address, ' ', ''))"
+    addr_url = addr_url.lower()
+    addr_url = eliminate_ordinals(addr_url)
     cursor.execute(query, (addr_url,))
     address_result = cursor.fetchone()
     if address_result is not None:
