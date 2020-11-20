@@ -1,6 +1,7 @@
 import logging
 logging.basicConfig(filename='/var/log/www/property_tags.log',level=logging.DEBUG)
 from astor_square_utils import *
+from astor_globals import *
 import os
 
 env = None
@@ -73,6 +74,31 @@ def add_tax_tag(propertyid, username, tag):
     except Exception as e:
         logging.error('error adding tag ' + tag + ' from property id ' + propertyid + ': ' + str(e))
         status['status'] = 'FAIL'
+    return json.dumps(status)
+
+
+def add_required_tax_tag(propertyid, username, tag):
+
+    dbenv = env
+    if propertyid is None:
+        return "{}"
+
+    logging.debug('adding tag ' + tag + ' to property id ' + propertyid + ' for user ' + username)
+
+    dbconnection = getDBConnection(cfg_dir + '/' + dbenv + "-api.ini")
+
+    status = dict()
+    cur = dbconnection.cursor()
+    query = "INSERT INTO tax_certiorari_tags VALUES (%s, %s, %s, true)"
+    logging.debug('executing query ' + query)
+    try:
+        cur.execute(query, (propertyid, tag, username))
+        dbconnection.commit()
+        status['status'] = 'SUCCESS'
+    except Exception as e:
+        logging.error('error adding tag ' + tag + ' from property id ' + propertyid + ': ' + str(e))
+        status['status'] = 'FAIL'
+        status['message'] = 'error adding tag ' + tag + ' from property id ' + propertyid + ': ' + str(e)
     return json.dumps(status)
 
 
@@ -243,5 +269,19 @@ def get_access_tax_properties(username):
     cur.execute(query, (username,))
     rows = cur.fetchall()
     propertyids = [row[0] for row in rows]
-    return json.dumps(propertyids);
-    return
+    return json.dumps(propertyids)
+
+
+def add_access_tax_tag(propertyid, username):
+    dbconnection = getDBConnection(api_db_initfile)
+    cursor = dbconnection.cursor()
+    query = 'INSERT INTO access_tax_property_tags VALUES (%s, %s)'
+    status = dict()
+    try:
+        cursor.execute(query, (propertyid, username))
+        dbconnection.commit()
+        status['status'] = 'SUCCESS'
+    except Exception as e:
+        status['status'] = 'FAILED'
+        status['message'] = str(e)
+    return status

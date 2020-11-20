@@ -57,7 +57,7 @@ class BuildingSchema(Schema):
     otherarea = fields.Int()
     gr_sqft = fields.Int()
     property_tax = fields.Float()
-    numfloors = fields.Int()
+    numfloors = fields.Float()
     unitsres = fields.Int()
     unitstotal = fields.Int()
     yearbuilt = fields.Int()

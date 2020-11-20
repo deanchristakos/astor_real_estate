@@ -518,7 +518,7 @@ class Building(object):
 
     def load_building_attributes(self):
         query = """SELECT bbl, address, zipcode, lotarea, bldgarea, comarea, resarea, officearea, retailarea, garagearea, strgearea, factryarea, otherarea,
-                numfloors, unitsres, unitstotal, yearbuilt, yearalter1, yearalter2, xcoord, ycoord FROM pluto_all WHERE bbl = %s"""
+                numfloors, unitsres, unitstotal, yearbuilt, yearalter1, yearalter2, xcoord, ycoord FROM pluto WHERE bbl = %s"""
         dbconnection = self.connection_pool.getconn()
         cursor = dbconnection.cursor()
         cursor.execute(query, (self.bbl,))
@@ -526,6 +526,9 @@ class Building(object):
         column_names = [d[0] for d in description]
         column_types = [d[1] for d in description]
         results = cursor.fetchone()
+        if results is None:
+            logging.error('no data for bbl ' + self.bbl)
+            return
         self.address = results[1] + ' NEW YORK, NY ' + str(results[2])
         self.lotarea = results[3]
         self.bldgarea = results[4]
@@ -596,11 +599,14 @@ class Building(object):
         return schema.dump(self)
 
     def _get_location_of_bbl(self, bbl):
-        query = '''select xcoord, ycoord FROM pluto_all WHERE bbl = %s'''
+        query = '''select xcoord, ycoord FROM pluto WHERE bbl = %s'''
         dbconnection = self.connection_pool.getconn()
         cursor = dbconnection.cursor()
         cursor.execute(query, (bbl,))
         result = cursor.fetchone()
+        if result is None:
+            logging.error('no location for bbl ' + bbl)
+            return
         self.connection_pool.putconn(dbconnection)
         return (result[0], result[1])
 
@@ -622,15 +628,19 @@ class Building(object):
         borough_string = get_borough_string(borough)
         query = '''select
             borough, block, lot, bbl::text AS bbl, address, zipcode,
-            lotarea, bldgarea, comarea, resarea, officearea, retailarea, garagearea, strgearea, factryarea, otherarea,
-            numfloors, unitsres, unitstotal, yearbuilt, yearalter1, yearalter2, xcoord, ycoord
-            from pluto_all WHERE borough = %s AND 
+            gross_square_feet, stories, residential_units, total_units, 
+            lot_area, residential_area, retail_area, office_area, common_area, storage_area, garage_area,
+            factory_area, building_area, other_area, 
+            yearbuilt, last_year_altered, xcoord, ycoord
+            from building_test WHERE borough = %s AND 
             xcoord > %s AND xcoord < %s AND ycoord > %s AND ycoord < %s'''
         cursor.execute(query, (borough_string, x2, x1, y2, y1))
         rows = cursor.fetchall()
         for results in rows:
             bbl = results[3]
             if bbl == self.bbl:
+                continue
+            if results[4] is None:
                 continue
             bldg = Building(bbl)
             bldg.address = results[4] + ' NEW YORK, NY ' + str(results[5])
