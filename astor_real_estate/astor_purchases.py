@@ -6,17 +6,17 @@ from astor_square_utils import *
 import sys
 
 
-def add_purchase(stripe_session_id, property_id, purchase_date):
+def add_purchase(stripe_session_id, email, property_id, purchase_date):
     dbconnection = getDBConnection(api_db_initfile)
     cursor = dbconnection.cursor()
-    query = 'INSERT INTO stripe_purchases VALUES (%s, %s, %s, false)'
+    query = 'INSERT INTO stripe_purchases VALUES (%s, %s, %s, %s, false)'
     status = dict()
     try:
-        cursor.execute(query, (stripe_session_id, property_id, purchase_date))
+        cursor.execute(query, (stripe_session_id, email, property_id, purchase_date))
         dbconnection.commit()
         status['status'] = 'SUCCESS'
     except Exception as e:
-        logging.error('failed to insert data '+ str((stripe_session_id, property_id, purchase_date)) + ': ' + str(e))
+        logging.error('failed to insert data '+ str((stripe_session_id, email, property_id, purchase_date)) + ': ' + str(e))
         status['status'] = 'FAILED'
     return json.dumps(status)
 
@@ -64,6 +64,23 @@ def get_purchases(stripe_session_id):
             results.append(data)
     except Exception as e:
         logging.error("failed to get purchase data with stripe_session_id " + stripe_session_id +':' + str(e))
+    return json.dumps(results)
+
+
+def get_purchases_by_email(email):
+    dbconnection = getDBConnection(api_db_initfile)
+    cursor = dbconnection.cursor()
+    query = "SELECT stripe_session_id, property_id, purchase_date FROM stripe_purchases WHERE email = %s"
+    results = []
+    try:
+        cursor.execute(query, (email,))
+        rows = cursor.fetchall()
+        for row in rows:
+            data = {'stripe_session_id':row[0], 'property_id': row[1], 'purchase_date': str(row[2])}
+            results.append(data)
+        results.append(data)
+    except Exception as e:
+        logging.error("failed to get purchase data with email " + email +':' + str(e))
     return json.dumps(results)
 
 
