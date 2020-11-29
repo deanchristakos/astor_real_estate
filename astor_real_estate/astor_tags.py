@@ -65,11 +65,15 @@ def add_tax_tag(propertyid, username, tag):
 
     status = dict()
     cur = dbconnection.cursor()
+    check_for_duplicates = 'UPDATE tax_certiorari_tags SET propertyid = %s WHERE propertyid = %s AND username = %s AND tag = %s'
+    cur.execute(check_for_duplicates, (propertyid, propertyid, username, tag))
+    rowcount = cur.rowcount
     query = "INSERT INTO tax_certiorari_tags VALUES (%s, %s, %s)"
     logging.debug('executing query ' + query)
     try:
-        cur.execute(query, (propertyid, tag, username))
-        dbconnection.commit()
+        if rowcount == 0:
+            cur.execute(query, (propertyid, tag, username))
+            dbconnection.commit()
         status['status'] = 'SUCCESS'
     except Exception as e:
         logging.error('error adding tag ' + tag + ' from property id ' + propertyid + ': ' + str(e))
@@ -89,11 +93,16 @@ def add_required_tax_tag(propertyid, username, tag):
 
     status = dict()
     cur = dbconnection.cursor()
+    check_for_duplicates = 'UPDATE tax_certiorari_tags SET propertyid = %s WHERE username = %s AND tag = %s and propertyid = %s and required = true'
+    cur.execute(check_for_duplicates, (propertyid, username, tag, propertyid))
+    rowcount = cur.rowcount
+
     query = "INSERT INTO tax_certiorari_tags VALUES (%s, %s, %s, true)"
     logging.debug('executing query ' + query)
     try:
-        cur.execute(query, (propertyid, tag, username))
-        dbconnection.commit()
+        if rowcount == 0:
+            cur.execute(query, (propertyid, tag, username))
+            dbconnection.commit()
         status['status'] = 'SUCCESS'
     except Exception as e:
         logging.error('error adding tag ' + tag + ' from property id ' + propertyid + ': ' + str(e))
@@ -273,15 +282,20 @@ def get_access_tax_properties(username):
 
 
 def add_access_tax_tag(propertyid, username):
+    status = dict()
+    status['status'] = 'SUCCESS'
     dbconnection = getDBConnection(api_db_initfile)
     cursor = dbconnection.cursor()
-    query = 'INSERT INTO access_tax_property_tags VALUES (%s, %s)'
-    status = dict()
-    try:
-        cursor.execute(query, (propertyid, username))
-        dbconnection.commit()
-        status['status'] = 'SUCCESS'
-    except Exception as e:
-        status['status'] = 'FAILED'
-        status['message'] = str(e)
+    check_for_duplicates = 'UPDATE access_tax_property_tags SET username = %s WHERE propertyid = %s AND username = %s'
+    cursor.execute(check_for_duplicates, (username, propertyid, username))
+    rowcount = cursor.rowcount
+    if rowcount == 0:
+        query = 'INSERT INTO access_tax_property_tags VALUES (%s, %s)'
+        try:
+            cursor.execute(query, (propertyid, username))
+            dbconnection.commit()
+            status['status'] = 'SUCCESS'
+        except Exception as e:
+            status['status'] = 'FAILED'
+            status['message'] = str(e)
     return status
