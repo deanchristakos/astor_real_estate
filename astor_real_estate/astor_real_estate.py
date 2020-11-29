@@ -242,11 +242,25 @@ def get_combined_tax_comparable_buildings(bbl):
 
     return result
 
+
 def get_mailing_address(bbl):
     connection_pool = getDBConnectionPool(cfg_dir + '/' + env + '-api.ini')
     mailing_address = MailingAddress(bbl, connection_pool)
     mailing_address_json = mailing_address.get_json()
     result = json.dumps(mailing_address_json)
+    return result
+
+
+def get_property_address(bbl):
+    dbconnection = getDBConnection(cfg_dir + '/' + env + '-api.ini')
+    cursor = dbconnection.cursor()
+    if "-" not in bbl:
+        bbl = '-'.join([bbl[0], bbl[1:6], bbl[6:10]])
+    query = 'SELECT DISTINCT address FROM building_tax_analysis WHERE borough_block_lot = %s'
+    cursor.execute(query, (bbl,))
+    row = cursor.fetchone()
+    property_address = row[0]
+    result = property_address
     return result
 
 def get_taxcert_neighborhoods():
