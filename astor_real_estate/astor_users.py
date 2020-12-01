@@ -4,17 +4,19 @@ logging.basicConfig(format='%(asctime)s %(funcName)s %(message)s', filename='/va
 from astor_globals import *
 from astor_square_utils import *
 import sys
+import datetime
 
 
-def add_user(username, email, stripe_id, dest_url):
+def add_user(username, email, stripe_id, toschecked, privacypolicychecked):
     status = dict()
     status['status'] = 'FAIL'
     dbconnection = getDBConnection(api_db_initfile)
     cursor = dbconnection.cursor()
-    query = 'INSERT INTO users VALUES (%s, %s, %s, %s)'
+    timestamp = datetime.datetime.now()
+    query = 'INSERT INTO users VALUES (%s, %s, %s, %s, %s, %s)'
     if email is not None:
         try:
-            cursor.execute(query, (username, email, stripe_id, dest_url))
+            cursor.execute(query, (username, email, stripe_id, toschecked, privacypolicychecked, timestamp))
             dbconnection.commit()
             status['status'] = 'SUCCESS'
         except Exception as e:
@@ -52,14 +54,16 @@ def get_user_data(email):
     result = dict()
     dbconnection = getDBConnection(api_db_initfile)
     cursor = dbconnection.cursor()
-    query = "SELECT username, email, stripe_id, url FROM users WHERE email = %s"
+    query = "SELECT username, email, stripe_id, toschecked, privacypolicychecked, whencreated FROM users WHERE email = %s"
     cursor.execute(query, (email,))
     row = cursor.fetchone()
     if row is not None:
         result['username'] = row[0]
         result['email'] = row[1]
         result['stripeid'] = row[2]
-        result['url'] = row[3]
+        result['toschecked'] = row[3]
+        result['privacypolicychecked'] = row[4]
+        result['whencreated'] = row[5]
     return json.dumps(result)
 
 def main(argv):
