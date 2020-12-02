@@ -78,7 +78,6 @@ def get_purchases_by_email(email):
         for row in rows:
             data = {'stripe_session_id':row[0], 'property_id': row[1], 'purchase_date': str(row[2])}
             results.append(data)
-        results.append(data)
     except Exception as e:
         logging.error("failed to get purchase data with email " + email +':' + str(e))
     return json.dumps(results)
