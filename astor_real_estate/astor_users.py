@@ -63,7 +63,7 @@ def get_user_data(email):
         result['stripeid'] = row[2]
         result['toschecked'] = row[3]
         result['privacypolicychecked'] = row[4]
-        result['whencreated'] = row[5]
+        result['whencreated'] = row[5].strftime('%Y%m%d %H:%M:S') if row[5] is not None else None
     return json.dumps(result)
 
 def main(argv):
