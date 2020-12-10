@@ -277,7 +277,7 @@ def get_access_tax_properties(username):
     cur = dbconnection.cursor()
     cur.execute(query, (username,))
     rows = cur.fetchall()
-    propertyids = [row[0] for row in rows]
+    propertyids = [row[0] for row in rows if row[0] is not None ]
     return json.dumps(propertyids)
 
 
