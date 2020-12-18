@@ -332,5 +332,16 @@ def get_calculated_tax(bbl, year):
     return result
 
 
+def get_broker_query_neighborhoods():
+    query = 'SELECT DISTINCT displayname FROM query_neighborhoods ORDER BY displayname'
+    dbconnection = getDBConnection(cfg_dir + '/' + env + '-api.ini')
+    cursor = dbconnection.cursor()
+    cursor.execute(query)
+    rows = cursor.fetchall()
+    result_list = [r[0] for r in rows]
+    result = json.dumps(result_list)
+    return result
+
+
 if __name__ == '__main__':
     main(sys.argv[1:])
