@@ -269,6 +269,18 @@ class CityComparable(Comparable):
                                     WHERE year = %s
                                     AND borough_block_lot = %s'''
 
+        self.unadjusted_income_query_alt = '''SELECT 
+                                        estimated_gross_income, 
+                                        gross_income_per_square_foot, 
+                                        estimated_expense, 
+                                        expense_per_square_foot, 
+                                        net_operating_income, 
+                                        full_market_value, 
+                                        market_value_per_square_foot 
+                                    FROM building_tax_analysis 
+                                    WHERE year = %s
+                                    AND borough_block_lot = %s'''
+
         self.unadjusted_estimated_gross_income = None
         self.unadjusted_gross_income_per_square_foot = None
         self.unadjusted_estimated_expense = None
@@ -346,6 +358,11 @@ class CityComparables(object):
             unadjusted_row = cursor.fetchone()
             if unadjusted_row is not None:
                 comparable.add_unadjusted_data_from_row(unadjusted_row)
+            else:
+                cursor.execute(comparable.unadjusted_income_query_alt, (comparable.year, comparable.borough_block_lot))
+                unadjusted_row = cursor.fetchone()
+                if unadjusted_row is not None:
+                    comparable.add_unadjusted_data_from_row(unadjusted_row)
             self.comparables.append(comparable)
         self.connection_pool.putconn(dbconnection)
         return
